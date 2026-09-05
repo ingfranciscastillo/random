@@ -1,3 +1,7 @@
+minimumReleaseAge: 1440
+strictDepBuilds: true
+blockExoticSubdeps: true
+
 allowBuilds:
   esbuild: true
   lightningcss: true
