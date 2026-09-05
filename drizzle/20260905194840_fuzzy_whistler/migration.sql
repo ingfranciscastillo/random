@@ -1,6 +1,6 @@
 CREATE TABLE "piece_reports" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-	"piece_id" uuid NOT NULL,
+	"piece_id" text NOT NULL,
 	"reason" text NOT NULL,
 	"note" text,
 	"reporter_fingerprint" text,
@@ -10,14 +10,14 @@ CREATE TABLE "piece_reports" (
 --> statement-breakpoint
 CREATE TABLE "piece_votes" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-	"piece_id" uuid NOT NULL,
+	"piece_id" text NOT NULL,
 	"voter_fingerprint" text NOT NULL,
 	"value" integer NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "pieces" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+	"id" text PRIMARY KEY,
 	"category" text NOT NULL,
 	"type" text NOT NULL,
 	"label" text NOT NULL,

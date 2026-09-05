@@ -1,3 +1,5 @@
+import { ReportButton } from "@/components/ReportButton";
+import { VoteControl } from "@/components/VoteControl";
 import { categories, type Piece, typeLabels } from "@/data/pieces";
 
 type Phase = "entering" | "exiting";
@@ -66,6 +68,14 @@ export function ContentPiece({ piece, phase }: { piece: Piece; phase: Phase }) {
 						{piece.source.name}
 					</a>
 				) : null}
+			</div>
+
+			<div
+				className={`${cls} mt-8 flex items-center justify-between`}
+				style={{ animationDelay: delay(220) }}
+			>
+				<VoteControl pieceId={piece.id} />
+				<ReportButton pieceId={piece.id} />
 			</div>
 		</article>
 	);

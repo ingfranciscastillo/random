@@ -1,7 +1,7 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "c6503baa-719c-4d8e-b0c5-da49e8d30de6",
+  "id": "dd4484d0-7417-4fe5-8c39-413f2940dd68",
   "prevIds": [
     "00000000-0000-0000-0000-000000000000"
   ],
@@ -38,7 +38,7 @@
       "table": "piece_reports"
     },
     {
-      "type": "uuid",
+      "type": "text",
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
@@ -129,7 +129,7 @@
       "table": "piece_votes"
     },
     {
-      "type": "uuid",
+      "type": "text",
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
@@ -181,11 +181,11 @@
       "table": "piece_votes"
     },
     {
-      "type": "uuid",
+      "type": "text",
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
-      "default": "gen_random_uuid()",
+      "default": null,
       "generated": null,
       "identity": null,
       "name": "id",

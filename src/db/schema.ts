@@ -9,6 +9,7 @@ import {
 } from "drizzle-orm/pg-core";
 
 import type { Category, PieceType } from "@/data/pieces";
+import type { ReportReason } from "@/lib/report-reasons";
 
 /** Where a piece's row-level moderation stands before it can appear in the deck. */
 export type PieceStatus = "pending" | "approved" | "rejected";
@@ -17,7 +18,11 @@ export type PieceStatus = "pending" | "approved" | "rejected";
 export type PieceSource = "seed" | "visitor";
 
 export const pieces = pgTable("pieces", {
-	id: uuid("id").defaultRandom().primaryKey().notNull(),
+	/** Matches the slug ids already used in data/pieces.ts (e.g. "hitachi") so seeding is a straight insert. */
+	id: text("id")
+		.primaryKey()
+		.$defaultFn(() => crypto.randomUUID())
+		.notNull(),
 	category: text("category").$type<Category>().notNull(),
 	type: text("type").$type<PieceType>().notNull(),
 	label: text("label").notNull(),
@@ -43,10 +48,10 @@ export const pieceVotes = pgTable(
 	"piece_votes",
 	{
 		id: uuid("id").defaultRandom().primaryKey().notNull(),
-		pieceId: uuid("piece_id")
+		pieceId: text("piece_id")
 			.references(() => pieces.id, { onDelete: "cascade" })
 			.notNull(),
-		/** Anonymous per-visitor identifier (e.g. a signed cookie value), not a user id. */
+		/** Anonymous per-visitor identifier (a cookie value), not a user id. */
 		voterFingerprint: text("voter_fingerprint").notNull(),
 		value: integer("value").$type<1 | -1>().notNull(),
 		createdAt: timestamp("created_at", { withTimezone: true })
@@ -62,22 +67,14 @@ export const pieceVotes = pgTable(
 	],
 );
 
-/** Predefined report subjects a visitor can pick — no free-form reason. */
-export type ReportReason =
-	| "incorrect"
-	| "duplicate"
-	| "offensive"
-	| "spam"
-	| "broken_link"
-	| "other";
-
 export type ReportStatus = "open" | "reviewed" | "dismissed";
 
+/** A visitor report against a piece. `reason` is a predefined subject — no free-form reason. */
 export const pieceReports = pgTable(
 	"piece_reports",
 	{
 		id: uuid("id").defaultRandom().primaryKey().notNull(),
-		pieceId: uuid("piece_id")
+		pieceId: text("piece_id")
 			.references(() => pieces.id, { onDelete: "cascade" })
 			.notNull(),
 		reason: text("reason").$type<ReportReason>().notNull(),
