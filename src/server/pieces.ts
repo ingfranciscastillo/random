@@ -1,8 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
+import { eq } from "drizzle-orm";
 
 import {
 	type Category,
 	categories,
+	type Piece,
 	type PieceType,
 	typeLabels,
 } from "@/data/pieces";
@@ -11,6 +13,28 @@ import { pieces } from "@/db/schema";
 
 const validCategories = new Set<string>(Object.keys(categories));
 const validTypes = new Set<string>(Object.keys(typeLabels));
+
+export const getApprovedPieces = createServerFn().handler(
+	async (): Promise<Piece[]> => {
+		const rows = await db
+			.select()
+			.from(pieces)
+			.where(eq(pieces.status, "approved"));
+		return rows.map((row) => ({
+			id: row.id,
+			category: row.category,
+			type: row.type,
+			label: row.label,
+			title: row.title,
+			context: row.context,
+			source:
+				row.sourceName && row.sourceUrl
+					? { name: row.sourceName, url: row.sourceUrl }
+					: undefined,
+			tags: row.tags ?? undefined,
+		}));
+	},
+);
 
 export const createPiece = createServerFn({ method: "POST" })
 	.validator(

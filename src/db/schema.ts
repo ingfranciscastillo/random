@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import {
 	index,
 	integer,
@@ -17,31 +18,50 @@ export type PieceStatus = "pending" | "approved" | "rejected";
 /** Who created the row: the seed script or a visitor via the submit form. */
 export type PieceSource = "seed" | "visitor";
 
-export const pieces = pgTable("pieces", {
-	/** Matches the slug ids already used in data/pieces.ts (e.g. "hitachi") so seeding is a straight insert. */
-	id: text("id")
-		.primaryKey()
-		.$defaultFn(() => crypto.randomUUID())
-		.notNull(),
-	category: text("category").$type<Category>().notNull(),
-	type: text("type").$type<PieceType>().notNull(),
-	label: text("label").notNull(),
-	title: text("title").notNull(),
-	context: text("context").notNull(),
-	sourceName: text("source_name"),
-	sourceUrl: text("source_url"),
-	tags: text("tags").array(),
-	/** Moderation state; only "approved" rows are served to visitors. */
-	status: text("status").$type<PieceStatus>().notNull().default("pending"),
-	submittedBy: text("submitted_by").$type<PieceSource>().notNull(),
-	reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
-	createdAt: timestamp("created_at", { withTimezone: true })
-		.defaultNow()
-		.notNull(),
-	updatedAt: timestamp("updated_at", { withTimezone: true })
-		.defaultNow()
-		.notNull(),
-});
+/** Where an automated pipeline row came from — lets /admin/review show the real provider instead of a generic "seed" label. */
+export type PieceSourceProvider = "wikidata" | "nasa" | "wikipedia-seed";
+
+export const pieces = pgTable(
+	"pieces",
+	{
+		/** Matches the slug ids already used in data/pieces.ts (e.g. "hitachi") so seeding is a straight insert. */
+		id: text("id")
+			.primaryKey()
+			.$defaultFn(() => crypto.randomUUID())
+			.notNull(),
+		category: text("category").$type<Category>().notNull(),
+		type: text("type").$type<PieceType>().notNull(),
+		label: text("label").notNull(),
+		title: text("title").notNull(),
+		context: text("context").notNull(),
+		sourceName: text("source_name"),
+		sourceUrl: text("source_url"),
+		tags: text("tags").array(),
+		/** Moderation state; only "approved" rows are served to visitors. */
+		status: text("status").$type<PieceStatus>().notNull().default("pending"),
+		submittedBy: text("submitted_by").$type<PieceSource>().notNull(),
+		/** Which automated pipeline produced this row, if any — null for visitor submissions and the manual curated seed. */
+		sourceProvider: text("source_provider").$type<PieceSourceProvider>(),
+		/** Stable id from the source (Wikidata QID, APOD date, …) — the real dedup key for pipeline re-runs, unlike a title-derived slug. */
+		sourceExternalId: text("source_external_id"),
+		/** Set only when the verification pass returns "uncertain" — surfaced to the admin as a flag, not a blocker. */
+		verificationNotes: text("verification_notes"),
+		reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+		updatedAt: timestamp("updated_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+	},
+	(t) => [
+		uniqueIndex("pieces_source_provider_external_id_unique")
+			.on(t.sourceProvider, t.sourceExternalId)
+			.where(
+				sql`${t.sourceProvider} is not null and ${t.sourceExternalId} is not null`,
+			),
+	],
+);
 
 /** A single up/down vote. One row per (piece, voter) — re-voting updates value in place. */
 export const pieceVotes = pgTable(

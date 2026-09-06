@@ -1,0 +1,40 @@
+name: Curiosity pipeline
+
+on:
+  schedule:
+    - cron: "0 12 * * *"
+  workflow_dispatch:
+    inputs:
+      count:
+        description: "How many candidates to harvest"
+        default: "10"
+      sources:
+        description: "Comma-separated sources (wikidata,nasa)"
+        default: "wikidata,nasa"
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Run pipeline
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          NASA_API_KEY: ${{ secrets.NASA_API_KEY }}
+        run: >
+          pnpm exec tsx src/pipeline/run.ts
+          --count=${{ github.event.inputs.count || '10' }}
+          --sources=${{ github.event.inputs.sources || 'wikidata,nasa' }}

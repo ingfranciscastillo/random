@@ -5,10 +5,18 @@ import { ContentPiece } from "@/components/ContentPiece";
 import { CreatePieceForm, type NewPiece } from "@/components/CreatePieceForm";
 import { ExploreButton } from "@/components/ExploreButton";
 import { RevealDots } from "@/components/RevealDots";
-import { categories, type Piece, pieces } from "@/data/pieces";
-import { createPiece } from "@/server/pieces";
+import {
+	categories,
+	pieces as fallbackPieces,
+	type Piece,
+} from "@/data/pieces";
+import { createPiece, getApprovedPieces } from "@/server/pieces";
 
 export const Route = createFileRoute("/")({
+	loader: async () => {
+		const approved = await getApprovedPieces();
+		return { pieces: approved.length > 0 ? approved : fallbackPieces };
+	},
 	head: () => ({
 		meta: [
 			{ title: "Random — una pieza de contenido curado a la vez" },
@@ -43,6 +51,7 @@ const EXIT_MS = 300;
 const GAP_MS = 120;
 
 function RandomPage() {
+	const { pieces } = Route.useLoaderData();
 	const [queue, setQueue] = useState<Piece[]>(() => pieces);
 	const [index, setIndex] = useState(0);
 	const [phase, setPhase] = useState<"entering" | "exiting" | "waiting">(
@@ -55,7 +64,7 @@ function RandomPage() {
 	useEffect(() => {
 		setQueue(shuffle(pieces));
 		setIndex(0);
-	}, []);
+	}, [pieces]);
 
 	const addPiece = useCallback(
 		(input: NewPiece) => {
@@ -82,7 +91,7 @@ function RandomPage() {
 		[],
 	);
 
-	const current = (queue[index] ?? pieces[0]) as Piece;
+	const current = (queue[index] ?? pieces[0] ?? fallbackPieces[0]) as Piece;
 	const accent = categories[current.category].accent;
 
 	const next = useCallback(() => {
@@ -134,7 +143,7 @@ function RandomPage() {
 							onClick={() => setFormOpen(true)}
 							className="text-[11px] uppercase tracking-[0.24em] text-ink-soft transition-opacity hover:opacity-60"
 						>
-							Crear curiosidad
+							Sugerir curiosidad
 						</button>
 					</div>
 				</div>

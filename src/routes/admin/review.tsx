@@ -1,10 +1,25 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { categories, typeLabels } from "@/data/pieces";
+import type { PieceSource, PieceSourceProvider } from "@/db/schema";
 import { adminLogin, getAdminAuthStatus } from "@/server/admin-auth";
 import { listPieces, reviewPiece } from "@/server/moderation";
 
 type PendingPiece = Awaited<ReturnType<typeof listPieces>>[number];
+
+const PROVIDER_LABELS: Record<PieceSourceProvider, string> = {
+	wikidata: "Wikidata",
+	nasa: "NASA",
+	"wikipedia-seed": "Wikipedia",
+};
+
+function sourceLabel(
+	submittedBy: PieceSource,
+	provider: PieceSourceProvider | null,
+): string {
+	if (provider) return PROVIDER_LABELS[provider];
+	return submittedBy === "seed" ? "Seed" : "Visitante";
+}
 
 export const Route = createFileRoute("/admin/review")({
 	loader: async () => {
@@ -167,9 +182,7 @@ function ReviewQueue() {
 											{categories[piece.category]?.label ?? piece.category}
 										</span>
 										<span className="rounded-full border border-ink/15 px-2 py-0.5 text-[10px] uppercase tracking-[0.18em] text-ink-soft">
-											{piece.submittedBy === "seed"
-												? "Seed / LLM"
-												: "Visitante"}
+											{sourceLabel(piece.submittedBy, piece.sourceProvider)}
 										</span>
 									</div>
 									<p className="text-[10px] uppercase tracking-[0.18em] text-ink-soft">
@@ -183,6 +196,12 @@ function ReviewQueue() {
 								<p className="mt-2 text-[13px] leading-relaxed text-ink-soft">
 									{piece.context}
 								</p>
+
+								{status === "pending" && piece.verificationNotes ? (
+									<p className="mt-3 text-[12px] uppercase tracking-[0.18em] leading-relaxed text-ink-soft">
+										Revisar: {piece.verificationNotes}
+									</p>
+								) : null}
 
 								{status === "pending" ? (
 									<div className="mt-6 flex items-center gap-6">
