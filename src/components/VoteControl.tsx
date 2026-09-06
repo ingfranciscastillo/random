@@ -68,9 +68,6 @@ export function VoteControl({ pieceId }: { pieceId: string }) {
 			>
 				<LikeIcon size={17} strokeWidth={1.5} />
 			</button>
-			<span className="min-w-5 text-center text-[11px] tabular-nums text-ink-soft">
-				{score === null ? "–" : score}
-			</span>
 			<button
 				type="button"
 				aria-label="Votar en contra"
