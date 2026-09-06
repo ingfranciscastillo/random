@@ -10,6 +10,11 @@ type QueryTemplate = {
 	/** Short label used only for logging/debugging, not stored anywhere. */
 	name: string;
 	sparql: string;
+	/** A fact guaranteed true for every row this query returns (it's what the
+	 * WHERE clause filters on) — injected even when the optional bindings
+	 * come back empty, so there's always at least one real hook to write
+	 * about instead of a bare label and a generic "species of X" description. */
+	staticFact?: string;
 };
 
 /**
@@ -26,10 +31,11 @@ const TEMPLATES: QueryTemplate[] = [
 		type: "fact",
 		name: "chemical-elements-discovery",
 		sparql: `
-			SELECT ?item ?itemLabel ?date ?discovererLabel WHERE {
+			SELECT ?item ?itemLabel ?date ?discovererLabel ?description WHERE {
 				?item wdt:P31 wd:Q11344.
 				?item wdt:P575 ?date.
 				OPTIONAL { ?item wdt:P61 ?discoverer. }
+				OPTIONAL { ?item schema:description ?description. FILTER(LANG(?description) IN ("es","en")) }
 				SERVICE wikibase:label { bd:serviceParam wikibase:language "es,en". }
 			}
 			ORDER BY RAND()
@@ -40,10 +46,12 @@ const TEMPLATES: QueryTemplate[] = [
 		category: "nature",
 		type: "fact",
 		name: "critically-endangered-species",
+		staticFact: "clasificada en peligro crítico de extinción",
 		sparql: `
-			SELECT ?item ?itemLabel WHERE {
+			SELECT ?item ?itemLabel ?description WHERE {
 				?item wdt:P141 wd:Q219127.
 				?item wdt:P105 wd:Q7432.
+				OPTIONAL { ?item schema:description ?description. FILTER(LANG(?description) IN ("es","en")) }
 				SERVICE wikibase:label { bd:serviceParam wikibase:language "es,en". }
 			}
 			ORDER BY RAND()
@@ -54,11 +62,13 @@ const TEMPLATES: QueryTemplate[] = [
 		category: "geography",
 		type: "place",
 		name: "world-heritage-sites",
+		staticFact: "declarado Patrimonio de la Humanidad por la UNESCO",
 		sparql: `
-			SELECT ?item ?itemLabel ?countryLabel ?inception WHERE {
+			SELECT ?item ?itemLabel ?countryLabel ?inception ?description WHERE {
 				?item wdt:P1435 wd:Q9259.
 				OPTIONAL { ?item wdt:P17 ?country. }
 				OPTIONAL { ?item wdt:P571 ?inception. }
+				OPTIONAL { ?item schema:description ?description. FILTER(LANG(?description) IN ("es","en")) }
 				SERVICE wikibase:label { bd:serviceParam wikibase:language "es,en". }
 			}
 			ORDER BY RAND()
@@ -74,9 +84,10 @@ const TEMPLATES: QueryTemplate[] = [
 		// out. Requiring P571 (inception date) too narrows it enough to run
 		// fast without randomizing.
 		sparql: `
-			SELECT ?item ?itemLabel ?inventorLabel ?date WHERE {
+			SELECT ?item ?itemLabel ?inventorLabel ?date ?description WHERE {
 				?item wdt:P61 ?inventor.
 				?item wdt:P571 ?date.
+				OPTIONAL { ?item schema:description ?description. FILTER(LANG(?description) IN ("es","en")) }
 				SERVICE wikibase:label { bd:serviceParam wikibase:language "es,en". }
 			}
 			LIMIT 15
@@ -87,10 +98,11 @@ const TEMPLATES: QueryTemplate[] = [
 		type: "event",
 		name: "historical-battles",
 		sparql: `
-			SELECT ?item ?itemLabel ?date ?locationLabel WHERE {
+			SELECT ?item ?itemLabel ?date ?locationLabel ?description WHERE {
 				?item wdt:P31 wd:Q178561.
 				?item wdt:P585 ?date.
 				OPTIONAL { ?item wdt:P276 ?location. }
+				OPTIONAL { ?item schema:description ?description. FILTER(LANG(?description) IN ("es","en")) }
 				SERVICE wikibase:label { bd:serviceParam wikibase:language "es,en". }
 			}
 			ORDER BY RAND()
@@ -102,10 +114,11 @@ const TEMPLATES: QueryTemplate[] = [
 		type: "record",
 		name: "tallest-skyscrapers",
 		sparql: `
-			SELECT ?item ?itemLabel ?height ?cityLabel WHERE {
+			SELECT ?item ?itemLabel ?height ?cityLabel ?description WHERE {
 				?item wdt:P31 wd:Q11303.
 				?item wdt:P2048 ?height.
 				OPTIONAL { ?item wdt:P131 ?city. }
+				OPTIONAL { ?item schema:description ?description. FILTER(LANG(?description) IN ("es","en")) }
 				SERVICE wikibase:label { bd:serviceParam wikibase:language "es,en". }
 			}
 			ORDER BY DESC(?height)
@@ -117,10 +130,11 @@ const TEMPLATES: QueryTemplate[] = [
 		type: "object",
 		name: "musical-instruments",
 		sparql: `
-			SELECT ?item ?itemLabel ?inventorLabel ?date WHERE {
+			SELECT ?item ?itemLabel ?inventorLabel ?date ?description WHERE {
 				?item wdt:P31 wd:Q34379.
 				OPTIONAL { ?item wdt:P61 ?inventor. }
 				OPTIONAL { ?item wdt:P571 ?date. }
+				OPTIONAL { ?item schema:description ?description. FILTER(LANG(?description) IN ("es","en")) }
 				SERVICE wikibase:label { bd:serviceParam wikibase:language "es,en". }
 			}
 			ORDER BY RAND()
@@ -198,10 +212,14 @@ export async function harvestWikidata(limit: number): Promise<RawCandidate[]> {
 			if (!item || !label || looksLikeRawEntityId(label)) continue;
 
 			const qid = qidFromUri(item);
-			const facts = bindingsToFacts(binding, new Set(["item"]));
-			// Nothing beyond the bare label (e.g. optional inventor/date both
-			// missing) gives the LLM nothing to write about but filler.
-			if (!facts) continue;
+			// itemLabel is excluded here too (it's prepended separately below) —
+			// otherwise `facts` always contains at least "itemLabel: X" and this
+			// guard never actually fires, even when nothing else was bound.
+			const bound = bindingsToFacts(binding, new Set(["item", "itemLabel"]));
+			const facts = [template.staticFact, bound].filter(Boolean).join("; ");
+			// Nothing beyond the bare label and maybe a static fact gives the
+			// LLM too little to write about but filler.
+			if (!bound && !template.staticFact) continue;
 
 			candidates.push({
 				sourceProvider: "wikidata",

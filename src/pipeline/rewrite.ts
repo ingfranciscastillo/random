@@ -36,6 +36,7 @@ ${examples}
 
 Reglas estrictas:
 - Toda cifra, fecha o nombre propio en tu respuesta debe aparecer literalmente en "HECHOS". Si te paso un "CONTEXTO ADICIONAL" de Wikipedia, usalo únicamente para elegir mejores palabras o entender mejor el tema — nunca para sumar una fecha, cifra o dato que no esté ya en HECHOS, aunque sea verdadero.
+- No agregues afirmaciones de relevancia que no estén en HECHOS: nada de "el primero en...", "el quinto...", "el más antiguo/grande/importante", ni el origen o motivo de un nombre, aunque sepas que es cierto. Preferí una curiosidad simple 100% respaldada por HECHOS antes que una más elaborada con datos de más.
 - Si los hechos no alcanzan para una curiosidad interesante, igual redactá lo mejor posible con lo que hay — no inventes para rellenar.
 - Al escribir números de miles, usá el formato con espacio como separador (ej. "4 000") solo si preferís esa forma; ambas se validan igual.
 - Respondé ÚNICAMENTE un objeto JSON con las claves: label, title, context, tags (array de strings). Sin texto adicional.`;
