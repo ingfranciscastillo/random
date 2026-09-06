@@ -10,11 +10,17 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminActivityRouteImport } from './routes/admin/activity'
 import { Route as AdminReviewRouteImport } from './routes/admin/review'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminActivityRoute = AdminActivityRouteImport.update({
+  id: '/admin/activity',
+  path: '/admin/activity',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminReviewRoute = AdminReviewRouteImport.update({
@@ -25,27 +31,31 @@ const AdminReviewRoute = AdminReviewRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin/activity': typeof AdminActivityRoute
   '/admin/review': typeof AdminReviewRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin/activity': typeof AdminActivityRoute
   '/admin/review': typeof AdminReviewRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin/activity': typeof AdminActivityRoute
   '/admin/review': typeof AdminReviewRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/admin/review'
+  fullPaths: '/' | '/admin/activity' | '/admin/review'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin/review'
-  id: '__root__' | '/' | '/admin/review'
+  to: '/' | '/admin/activity' | '/admin/review'
+  id: '__root__' | '/' | '/admin/activity' | '/admin/review'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminActivityRoute: typeof AdminActivityRoute
   AdminReviewRoute: typeof AdminReviewRoute
 }
 
@@ -56,6 +66,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/activity': {
+      id: '/admin/activity'
+      path: '/admin/activity'
+      fullPath: '/admin/activity'
+      preLoaderRoute: typeof AdminActivityRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/review': {
@@ -70,6 +87,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminActivityRoute: AdminActivityRoute,
   AdminReviewRoute: AdminReviewRoute,
 }
 export const routeTree = rootRouteImport

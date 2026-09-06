@@ -1,9 +1,11 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
+import { AdminGate } from "@/components/admin/AdminGate";
+import { AdminNav } from "@/components/admin/AdminNav";
 import { Wordmark } from "@/components/Logo";
 import { categories, typeLabels } from "@/data/pieces";
 import type { PieceSource, PieceSourceProvider } from "@/db/schema";
-import { adminLogin, getAdminAuthStatus } from "@/server/admin-auth";
+import { getAdminAuthStatus } from "@/server/admin-auth";
 import {
 	listPieces,
 	regeneratePiece,
@@ -45,68 +47,10 @@ function AdminReviewPage() {
 	const { authed } = Route.useLoaderData();
 	const router = useRouter();
 
-	if (!authed) {
-		return <LoginGate onSuccess={() => router.invalidate()} />;
-	}
-	return <ReviewQueue />;
-}
-
-function LoginGate({ onSuccess }: { onSuccess: () => void }) {
-	const [password, setPassword] = useState("");
-	const [error, setError] = useState<string | null>(null);
-	const [pending, setPending] = useState(false);
-	const passwordRef = useRef<HTMLInputElement>(null);
-
-	useEffect(() => {
-		passwordRef.current?.focus();
-	}, []);
-
-	const handleSubmit = async (e: React.FormEvent) => {
-		e.preventDefault();
-		setPending(true);
-		setError(null);
-		try {
-			await adminLogin({ data: { password } });
-			onSuccess();
-		} catch {
-			setError("Contraseña incorrecta.");
-		} finally {
-			setPending(false);
-		}
-	};
-
 	return (
-		<main className="flex min-h-screen items-center justify-center bg-paper px-6">
-			<form onSubmit={handleSubmit} className="w-full max-w-80 space-y-6">
-				<Wordmark suffix="Admin" />
-				<div>
-					<label
-						htmlFor="admin-password"
-						className="block text-[10px] uppercase tracking-[0.24em] text-ink-soft"
-					>
-						Contraseña
-					</label>
-					<input
-						id="admin-password"
-						ref={passwordRef}
-						type="password"
-						value={password}
-						onChange={(e) => setPassword(e.target.value)}
-						className="mt-2 w-full border-b border-ink/15 bg-transparent pb-2 text-base text-ink outline-none transition-colors duration-200 focus:border-ink/50"
-					/>
-				</div>
-				{error ? (
-					<p className="text-[12px] tracking-[0.02em] text-ink-soft">{error}</p>
-				) : null}
-				<button
-					type="submit"
-					disabled={pending || !password}
-					className="text-[11px] uppercase tracking-[0.24em] text-ink transition-opacity hover:opacity-60 disabled:opacity-30"
-				>
-					Entrar
-				</button>
-			</form>
-		</main>
+		<AdminGate authed={authed} onSuccess={() => router.invalidate()}>
+			<ReviewQueue />
+		</AdminGate>
 	);
 }
 
@@ -191,6 +135,7 @@ function ReviewQueue() {
 		<main className="min-h-screen bg-paper px-6 py-14 sm:px-10">
 			<div className="mx-auto max-w-180">
 				<Wordmark suffix="Admin" />
+				<AdminNav />
 				<h1 className="mt-3 font-display text-3xl font-light text-ink">
 					Revisión de contenido
 				</h1>
