@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 import { type ReportReason, reportReasons } from "@/lib/report-reasons";
 import { createReport } from "@/server/reports";
@@ -40,7 +41,7 @@ export function ReportForm({
 		}
 	};
 
-	return (
+	return createPortal(
 		<div className="fixed inset-0 z-50 flex items-center justify-center px-6">
 			<button
 				type="button"
@@ -133,6 +134,7 @@ export function ReportForm({
 					</form>
 				)}
 			</div>
-		</div>
+		</div>,
+		document.body,
 	);
 }

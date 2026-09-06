@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 import {
 	type Category,
@@ -65,7 +66,7 @@ export function CreatePieceForm({
 		onSubmit({ category, type, title: t, context: c });
 	};
 
-	return (
+	return createPortal(
 		<div className="fixed inset-0 z-50 flex items-center justify-center px-6">
 			<button
 				type="button"
@@ -188,6 +189,7 @@ export function CreatePieceForm({
 					</div>
 				</form>
 			</div>
-		</div>
+		</div>,
+		document.body,
 	);
 }
