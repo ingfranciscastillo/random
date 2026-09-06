@@ -11,7 +11,7 @@ import {
 	updatePiece,
 } from "@/server/moderation";
 
-type PendingPiece = Awaited<ReturnType<typeof listPieces>>[number];
+type PendingPiece = Awaited<ReturnType<typeof listPieces>>["items"][number];
 
 const PROVIDER_LABELS: Record<PieceSourceProvider, string> = {
 	wikidata: "Wikidata",
@@ -123,33 +123,67 @@ function ReviewQueue() {
 	const [status, setStatus] = useState<"pending" | "approved" | "rejected">(
 		"pending",
 	);
-	const [items, setItems] = useState<PendingPiece[] | null>(null);
+	const [search, setSearch] = useState("");
+	const [debouncedSearch, setDebouncedSearch] = useState("");
+	const [page, setPage] = useState(1);
+	const [result, setResult] = useState<Awaited<
+		ReturnType<typeof listPieces>
+	> | null>(null);
 	const [busyId, setBusyId] = useState<string | null>(null);
 
 	useEffect(() => {
+		const timeout = window.setTimeout(() => setDebouncedSearch(search), 300);
+		return () => window.clearTimeout(timeout);
+	}, [search]);
+
+	useEffect(() => {
 		let cancelled = false;
-		setItems(null);
-		listPieces({ data: { status } }).then((rows) => {
-			if (!cancelled) setItems(rows);
+		setResult(null);
+		listPieces({
+			data: {
+				status,
+				search: status === "pending" ? undefined : debouncedSearch,
+				page,
+			},
+		}).then((res) => {
+			if (!cancelled) setResult(res);
 		});
 		return () => {
 			cancelled = true;
 		};
-	}, [status]);
+	}, [status, debouncedSearch, page]);
+
+	const items = result?.items ?? null;
+	const totalPages = result
+		? Math.max(1, Math.ceil(result.total / result.pageSize))
+		: 1;
 
 	const decide = async (id: string, decision: "approved" | "rejected") => {
 		setBusyId(id);
 		try {
 			await reviewPiece({ data: { id, decision } });
-			setItems((prev) => prev?.filter((p) => p.id !== id) ?? prev);
+			setResult((prev) =>
+				prev
+					? {
+							...prev,
+							items: prev.items.filter((p) => p.id !== id),
+							total: prev.total - 1,
+						}
+					: prev,
+			);
 		} finally {
 			setBusyId(null);
 		}
 	};
 
 	const replace = (updated: PendingPiece) => {
-		setItems(
-			(prev) => prev?.map((p) => (p.id === updated.id ? updated : p)) ?? prev,
+		setResult((prev) =>
+			prev
+				? {
+						...prev,
+						items: prev.items.map((p) => (p.id === updated.id ? updated : p)),
+					}
+				: prev,
 		);
 	};
 
@@ -161,19 +195,36 @@ function ReviewQueue() {
 					Revisión de contenido
 				</h1>
 
-				<div className="mt-8 flex gap-6 border-b border-ink/10 pb-3">
-					{statusTabs.map((tab) => (
-						<button
-							key={tab.value}
-							type="button"
-							onClick={() => setStatus(tab.value)}
-							className={`text-[11px] uppercase tracking-[0.24em] transition-opacity hover:opacity-70 ${
-								status === tab.value ? "text-ink" : "text-ink-soft"
-							}`}
-						>
-							{tab.label}
-						</button>
-					))}
+				<div className="mt-8 flex flex-wrap items-center justify-between gap-4 border-b border-ink/10 pb-3">
+					<div className="flex gap-6">
+						{statusTabs.map((tab) => (
+							<button
+								key={tab.value}
+								type="button"
+								onClick={() => {
+									setStatus(tab.value);
+									setPage(1);
+								}}
+								className={`text-[11px] uppercase tracking-[0.24em] transition-opacity hover:opacity-70 ${
+									status === tab.value ? "text-ink" : "text-ink-soft"
+								}`}
+							>
+								{tab.label}
+							</button>
+						))}
+					</div>
+					{status !== "pending" ? (
+						<input
+							type="search"
+							value={search}
+							onChange={(e) => {
+								setSearch(e.target.value);
+								setPage(1);
+							}}
+							placeholder="Buscar por título, contexto o label…"
+							className="w-full max-w-70 border-b border-ink/15 bg-transparent pb-1 text-[13px] text-ink outline-none focus:border-ink/50"
+						/>
+					) : null}
 				</div>
 
 				<div className="mt-8 space-y-6">
@@ -194,6 +245,30 @@ function ReviewQueue() {
 						))
 					)}
 				</div>
+
+				{result && result.total > result.pageSize ? (
+					<div className="mt-10 flex items-center justify-between">
+						<button
+							type="button"
+							disabled={page <= 1}
+							onClick={() => setPage((p) => p - 1)}
+							className="text-[11px] uppercase tracking-[0.24em] text-ink-soft transition-opacity hover:opacity-60 disabled:opacity-30"
+						>
+							Anterior
+						</button>
+						<p className="text-[10px] uppercase tracking-[0.18em] text-ink-soft">
+							Página {page} de {totalPages}
+						</p>
+						<button
+							type="button"
+							disabled={page >= totalPages}
+							onClick={() => setPage((p) => p + 1)}
+							className="text-[11px] uppercase tracking-[0.24em] text-ink-soft transition-opacity hover:opacity-60 disabled:opacity-30"
+						>
+							Siguiente
+						</button>
+					</div>
+				) : null}
 			</div>
 		</main>
 	);

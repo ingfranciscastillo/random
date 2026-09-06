@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { desc, eq } from "drizzle-orm";
+import { and, count, desc, eq, ilike, or } from "drizzle-orm";
 
 import { db } from "@/db";
 import { type PieceStatus, pieces } from "@/db/schema";
@@ -8,20 +8,47 @@ import { verifyDraft } from "@/pipeline/verify";
 import { requireAdmin } from "@/server/admin-auth";
 
 const validStatuses = new Set<PieceStatus>(["pending", "approved", "rejected"]);
+const PAGE_SIZE = 10;
 
 export const listPieces = createServerFn()
-	.validator((data?: { status?: PieceStatus }) => {
-		const status = data?.status ?? "pending";
-		if (!validStatuses.has(status)) throw new Error("invalid status");
-		return { status };
-	})
+	.validator(
+		(data?: { status?: PieceStatus; search?: string; page?: number }) => {
+			const status = data?.status ?? "pending";
+			if (!validStatuses.has(status)) throw new Error("invalid status");
+			const page =
+				data?.page && Number.isInteger(data.page) && data.page > 0
+					? data.page
+					: 1;
+			return { status, search: data?.search?.trim() || undefined, page };
+		},
+	)
 	.handler(async ({ data }) => {
 		await requireAdmin();
-		return db
-			.select()
-			.from(pieces)
-			.where(eq(pieces.status, data.status))
-			.orderBy(desc(pieces.createdAt));
+		const conditions = [eq(pieces.status, data.status)];
+		if (data.search) {
+			const term = `%${data.search}%`;
+			conditions.push(
+				or(
+					ilike(pieces.title, term),
+					ilike(pieces.context, term),
+					ilike(pieces.label, term),
+				) ?? eq(pieces.status, data.status),
+			);
+		}
+		const where = and(...conditions);
+
+		const [items, [{ total }]] = await Promise.all([
+			db
+				.select()
+				.from(pieces)
+				.where(where)
+				.orderBy(desc(pieces.createdAt))
+				.limit(PAGE_SIZE)
+				.offset((data.page - 1) * PAGE_SIZE),
+			db.select({ total: count() }).from(pieces).where(where),
+		]);
+
+		return { items, total, page: data.page, pageSize: PAGE_SIZE };
 	});
 
 export const reviewPiece = createServerFn({ method: "POST" })
