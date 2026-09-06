@@ -1,5 +1,6 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
+import { Wordmark } from "@/components/Logo";
 import { categories, typeLabels } from "@/data/pieces";
 import type { PieceSource, PieceSourceProvider } from "@/db/schema";
 import { adminLogin, getAdminAuthStatus } from "@/server/admin-auth";
@@ -77,9 +78,7 @@ function LoginGate({ onSuccess }: { onSuccess: () => void }) {
 	return (
 		<main className="flex min-h-screen items-center justify-center bg-paper px-6">
 			<form onSubmit={handleSubmit} className="w-full max-w-80 space-y-6">
-				<p className="text-[10px] uppercase tracking-[0.34em] text-ink-soft">
-					Random — Admin
-				</p>
+				<Wordmark suffix="Admin" />
 				<div>
 					<label
 						htmlFor="admin-password"
@@ -157,9 +156,7 @@ function ReviewQueue() {
 	return (
 		<main className="min-h-screen bg-paper px-6 py-14 sm:px-10">
 			<div className="mx-auto max-w-180">
-				<p className="text-[10px] uppercase tracking-[0.34em] text-ink-soft">
-					Random — Admin
-				</p>
+				<Wordmark suffix="Admin" />
 				<h1 className="mt-3 font-display text-3xl font-light text-ink">
 					Revisión de contenido
 				</h1>

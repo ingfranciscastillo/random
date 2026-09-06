@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ContentPiece } from "@/components/ContentPiece";
 import { CreatePieceForm, type NewPiece } from "@/components/CreatePieceForm";
 import { ExploreButton } from "@/components/ExploreButton";
+import { Wordmark } from "@/components/Logo";
 import { RevealDots } from "@/components/RevealDots";
 import {
 	categories,
@@ -116,9 +117,7 @@ function RandomPage() {
 			style={style}
 			className="relative flex min-h-screen flex-col bg-paper px-6 sm:px-10"
 		>
-			<p className="pt-10 text-[10px] uppercase tracking-[0.34em] text-ink-soft">
-				Random
-			</p>
+			<Wordmark className="pt-10" />
 
 			<div className="flex flex-1 items-center justify-center py-20 sm:py-28">
 				<div className="w-full max-w-160">

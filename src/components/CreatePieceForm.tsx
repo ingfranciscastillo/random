@@ -1,7 +1,7 @@
 import { ArrowRightIcon } from "@solar-icons/react/outline/arrow-right";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-
+import { Wordmark } from "@/components/Logo";
 import {
 	type Category,
 	categories,
@@ -82,9 +82,7 @@ export function CreatePieceForm({
 				aria-label="Sugerir curiosidad"
 				className="reveal-enter relative z-10 w-full max-w-130 border border-ink/10 bg-paper px-8 py-10 sm:px-12"
 			>
-				<p className="text-[10px] uppercase tracking-[0.34em] text-ink-soft">
-					Random
-				</p>
+				<Wordmark />
 				<h2 className="mt-4 font-display text-3xl font-light text-ink">
 					Sugerir curiosidad
 				</h2>

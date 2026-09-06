@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
+import { Wordmark } from "@/components/Logo";
 import { type ReportReason, reportReasons } from "@/lib/report-reasons";
 import { createReport } from "@/server/reports";
 
@@ -56,9 +57,7 @@ export function ReportForm({
 				aria-label="Reportar pieza"
 				className="reveal-enter relative z-10 w-full max-w-110 border border-ink/10 bg-paper px-8 py-10 sm:px-12"
 			>
-				<p className="text-[10px] uppercase tracking-[0.34em] text-ink-soft">
-					Random
-				</p>
+				<Wordmark />
 				<h2 className="mt-4 font-display text-2xl font-light text-ink">
 					Reportar
 				</h2>

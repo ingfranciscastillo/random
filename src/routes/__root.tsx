@@ -14,9 +14,7 @@ function NotFoundComponent() {
 		<div className="flex min-h-screen items-center justify-center bg-paper px-4">
 			<div className="max-w-md text-center">
 				<h1 className="text-7xl font-bold text-ink">404</h1>
-				<h2 className="mt-4 text-xl font-semibold text-ink">
-					Page not found
-				</h2>
+				<h2 className="mt-4 text-xl font-semibold text-ink">Page not found</h2>
 				<p className="mt-2 text-sm text-ink-soft">
 					The page you're looking for doesn't exist or has been moved.
 				</p>
@@ -56,7 +54,7 @@ export const Route = createRootRoute({
 				rel: "stylesheet",
 				href: "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500&family=Inter:wght@400;500&display=swap",
 			},
-			{ rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+			{ rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
 		],
 	}),
 	shellComponent: RootDocument,
