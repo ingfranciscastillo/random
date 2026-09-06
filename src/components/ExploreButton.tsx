@@ -1,3 +1,4 @@
+import { ArrowRightIcon } from "@solar-icons/react/outline/arrow-right";
 import { useState } from "react";
 
 export function ExploreButton({
@@ -38,7 +39,7 @@ export function ExploreButton({
 				aria-hidden
 				className="inline-block transition-transform duration-200 ease-out group-hover:translate-x-1 motion-reduce:transition-none motion-reduce:group-hover:translate-x-0"
 			>
-				→
+				<ArrowRightIcon size={14} strokeWidth={1.75} />
 			</span>
 		</button>
 	);

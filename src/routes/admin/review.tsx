@@ -31,6 +31,12 @@ export const Route = createFileRoute("/admin/review")({
 		const { authed } = await getAdminAuthStatus();
 		return { authed };
 	},
+	head: () => ({
+		meta: [
+			{ title: "Random — Admin" },
+			{ name: "robots", content: "noindex, nofollow" },
+		],
+	}),
 	component: AdminReviewPage,
 });
 
