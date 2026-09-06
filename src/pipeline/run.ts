@@ -117,6 +117,7 @@ async function main() {
 					verdict.verdict === "uncertain"
 						? verdict.issues.join(" ")
 						: undefined,
+				sourceFacts: candidate.facts,
 			})
 			.onConflictDoNothing({
 				target: [pieces.sourceProvider, pieces.sourceExternalId],

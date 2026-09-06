@@ -46,6 +46,8 @@ export const pieces = pgTable(
 		sourceExternalId: text("source_external_id"),
 		/** Set only when the verification pass returns "uncertain" — surfaced to the admin as a flag, not a blocker. */
 		verificationNotes: text("verification_notes"),
+		/** Raw facts the pipeline drafted this piece from — kept so the admin can ask the LLM to rewrite in place instead of discarding and re-harvesting. Null for visitor submissions and the manual curated seed. */
+		sourceFacts: text("source_facts"),
 		reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
 		createdAt: timestamp("created_at", { withTimezone: true })
 			.defaultNow()

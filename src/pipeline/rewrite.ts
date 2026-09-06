@@ -60,12 +60,17 @@ function validateDraft(raw: unknown): DraftPiece | null {
 
 export async function rewriteCandidate(
 	candidate: RawCandidate,
+	feedback?: string,
 ): Promise<DraftPiece | null> {
 	const userPrompt = `HECHOS:\n${candidate.facts}${
 		candidate.context
 			? `\n\nCONTEXTO ADICIONAL (Wikipedia, solo para color, no inventes nada que no esté ya en HECHOS):\n${candidate.context}`
 			: ""
-	}\n\nCategoría: ${candidate.category}. Tipo: ${candidate.type}.`;
+	}\n\nCategoría: ${candidate.category}. Tipo: ${candidate.type}.${
+		feedback
+			? `\n\nAJUSTE PEDIDO POR EL EDITOR (prioridad sobre cualquier otra preferencia, pero seguí respetando que todo dato venga de HECHOS): ${feedback}`
+			: ""
+	}`;
 
 	const content = await callGroq(
 		[
