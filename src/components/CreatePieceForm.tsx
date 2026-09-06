@@ -78,14 +78,14 @@ export function CreatePieceForm({
 			<div
 				role="dialog"
 				aria-modal="true"
-				aria-label="Crear curiosidad"
+				aria-label="Sugerir curiosidad"
 				className="reveal-enter relative z-10 w-full max-w-130 border border-ink/10 bg-paper px-8 py-10 sm:px-12"
 			>
 				<p className="text-[10px] uppercase tracking-[0.34em] text-ink-soft">
 					Random
 				</p>
 				<h2 className="mt-4 font-display text-3xl font-light text-ink">
-					Crear curiosidad
+					Sugerir curiosidad
 				</h2>
 
 				<form onSubmit={handleSubmit} className="mt-10 space-y-8">
