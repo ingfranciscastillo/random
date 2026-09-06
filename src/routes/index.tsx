@@ -6,6 +6,7 @@ import { CreatePieceForm, type NewPiece } from "@/components/CreatePieceForm";
 import { ExploreButton } from "@/components/ExploreButton";
 import { RevealDots } from "@/components/RevealDots";
 import { categories, type Piece, pieces } from "@/data/pieces";
+import { createPiece } from "@/server/pieces";
 
 export const Route = createFileRoute("/")({
 	head: () => ({
@@ -69,6 +70,7 @@ function RandomPage() {
 				return next;
 			});
 			setFormOpen(false);
+			createPiece({ data: input }).catch(() => {});
 		},
 		[index],
 	);
