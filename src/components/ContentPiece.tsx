@@ -25,21 +25,24 @@ export function ContentPiece({ piece, phase }: { piece: Piece; phase: Phase }) {
 	return (
 		<article>
 			<div
-				className={`${cls} flex flex-wrap items-center gap-x-4 gap-y-2`}
+				className={`${cls} flex flex-wrap items-center justify-between gap-x-4 gap-y-2`}
 				style={{ animationDelay: delay(0) }}
 			>
-				<p className="text-[11px] uppercase tracking-[0.22em] text-ink">
-					{typeLabels[piece.type]}
-				</p>
-				<span className="flex items-center gap-2">
-					<span
-						className="accent-shift block h-1.25 w-1.25 rounded-full"
-						style={{ backgroundColor: "var(--accent)" }}
-					/>
-					<span className="text-[11px] uppercase tracking-[0.22em] text-ink-soft">
-						{family.label}
+				<div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+					<p className="text-[11px] uppercase tracking-[0.22em] text-ink">
+						{typeLabels[piece.type]}
+					</p>
+					<span className="flex items-center gap-2">
+						<span
+							className="accent-shift block h-1.25 w-1.25 rounded-full"
+							style={{ backgroundColor: "var(--accent)" }}
+						/>
+						<span className="text-[11px] uppercase tracking-[0.22em] text-ink-soft">
+							{family.label}
+						</span>
 					</span>
-				</span>
+				</div>
+				<ReportButton pieceId={piece.id} />
 			</div>
 
 			<h1
@@ -70,12 +73,8 @@ export function ContentPiece({ piece, phase }: { piece: Piece; phase: Phase }) {
 				) : null}
 			</div>
 
-			<div
-				className={`${cls} mt-8 flex items-center justify-between`}
-				style={{ animationDelay: delay(220) }}
-			>
+			<div className={`${cls} mt-8`} style={{ animationDelay: delay(220) }}>
 				<VoteControl pieceId={piece.id} />
-				<ReportButton pieceId={piece.id} />
 			</div>
 		</article>
 	);
