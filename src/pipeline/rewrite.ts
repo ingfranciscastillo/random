@@ -2,17 +2,21 @@ import { pieces as examplePieces } from "../data/pieces";
 import { callGroq } from "./groq";
 import type { DraftPiece, RawCandidate } from "./types";
 
-const FEW_SHOT_EXAMPLES = examplePieces
-	.filter(
-		(p) =>
-			p.type === "fact" ||
-			p.type === "place" ||
-			p.type === "event" ||
-			p.type === "record" ||
-			p.type === "person" ||
-			p.type === "object",
-	)
-	.slice(0, 6);
+/** Hand-picked, not a slice of a filter — chosen specifically because their
+ * context line is a short tag (place/year), never a sentence that repeats
+ * the title. That's the pattern the model kept missing before this list
+ * was curated deliberately instead of taken from array order. */
+const EXAMPLE_IDS = [
+	"cassini-final",
+	"krakatoa",
+	"roman-concrete",
+	"hedy",
+	"voyager",
+	"hitachi",
+];
+const FEW_SHOT_EXAMPLES = EXAMPLE_IDS.map((id) =>
+	examplePieces.find((p) => p.id === id),
+).filter((p) => p !== undefined);
 
 function buildSystemPrompt(): string {
 	const examples = FEW_SHOT_EXAMPLES.map(
@@ -22,12 +26,12 @@ function buildSystemPrompt(): string {
 
 	return `Sos el editor de "Random", un sitio que muestra una curiosidad a la vez, en español, con voz cálida y directa — nunca enciclopédica.
 
-Reglas del "título": una sola frase que ES la curiosidad completa (el hecho sorprendente en sí), no un titular ni un nombre propio suelto. Máximo 280 caracteres.
-Reglas del "contexto": uno o dos datos de apoyo (dónde, cuándo, quién) en un renglón corto. Máximo 500 caracteres. Nunca repite palabra por palabra el título.
+Reglas del "título": UNA sola frase corta con el hecho más sorprendente — elegí el ángulo más llamativo, no trates de meter todos los datos que tengas. Si "HECHOS" trae varios datos (tamaño, distancia, nombre de otro objeto, fecha), quedate con uno o dos como máximo; el resto se descarta. Apuntá a 90-160 caracteres; 280 es el techo absoluto, no la meta.
+Reglas del "contexto": es una FICHA corta, no una segunda oración explicativa. Lugar y/o año, como una leyenda de foto: "Fin de la misión Cassini, 2017." o "Erupción del Krakatoa, Indonesia, 1883.". Nunca reformules ni repitas lo que ya dijo el título con otras palabras — si no tenés un dato de lugar/fecha distinto que agregar, dejá el contexto lo más corto posible, no lo alargues rellenando. Máximo 500 caracteres pero la meta real es menos de 80.
 "label": nombre corto y humano de la entidad (2-4 palabras).
 "tags": 2 a 4 palabras clave en minúscula, sin tildes si es más natural así, relacionadas al tema.
 
-Ejemplos reales del tono del sitio:
+Ejemplos reales del tono del sitio (fijate el contraste entre el título, que cuenta el hecho, y el contexto, que es solo una ficha corta):
 ${examples}
 
 Reglas estrictas:

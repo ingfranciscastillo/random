@@ -199,6 +199,9 @@ export async function harvestWikidata(limit: number): Promise<RawCandidate[]> {
 
 			const qid = qidFromUri(item);
 			const facts = bindingsToFacts(binding, new Set(["item"]));
+			// Nothing beyond the bare label (e.g. optional inventor/date both
+			// missing) gives the LLM nothing to write about but filler.
+			if (!facts) continue;
 
 			candidates.push({
 				sourceProvider: "wikidata",
