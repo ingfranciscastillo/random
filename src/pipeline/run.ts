@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import { db } from "../db/index";
 import { pieces } from "../db/schema";
 import { rewriteCandidate } from "./rewrite";
@@ -119,6 +120,7 @@ async function main() {
 			})
 			.onConflictDoNothing({
 				target: [pieces.sourceProvider, pieces.sourceExternalId],
+				where: sql`${pieces.sourceProvider} is not null and ${pieces.sourceExternalId} is not null`,
 			});
 
 		inserted++;

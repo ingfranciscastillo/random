@@ -158,10 +158,23 @@ function looksLikeRawEntityId(value: string): boolean {
 	return /^[QLP]\d+$/.test(value);
 }
 
+/**
+ * Wikidata dates come back as full ISO datetimes ("1868-08-18T00:00:00Z").
+ * The trailing "T00:00:00Z" is never meaningful for these claims (precision
+ * is day/year at best) and, worse, glues the day number to a "T" with no
+ * word boundary between them — that broke the verifier's plain \b\d\b
+ * grounding check, which never saw "18" as a token and flagged every date
+ * as unsupported. Trimming to the date part fixes both problems at once.
+ */
+function formatValue(value: string): string {
+	const isoDate = value.match(/^(\d{4}-\d{2}-\d{2})T/);
+	return isoDate ? isoDate[1] : value;
+}
+
 function bindingsToFacts(binding: SparqlBinding, skip: Set<string>): string {
 	return Object.entries(binding)
 		.filter(([key, val]) => !skip.has(key) && !looksLikeRawEntityId(val.value))
-		.map(([key, val]) => `${key}: ${val.value}`)
+		.map(([key, val]) => `${key}: ${formatValue(val.value)}`)
 		.join("; ");
 }
 

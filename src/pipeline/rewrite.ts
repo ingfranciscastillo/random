@@ -1,8 +1,6 @@
 import { pieces as examplePieces } from "../data/pieces";
+import { callGroq } from "./groq";
 import type { DraftPiece, RawCandidate } from "./types";
-
-const GROQ_ENDPOINT = "https://api.groq.com/openai/v1/chat/completions";
-const DEFAULT_MODEL = "openai/gpt-oss-120b";
 
 const FEW_SHOT_EXAMPLES = examplePieces
 	.filter(
@@ -33,8 +31,9 @@ Ejemplos reales del tono del sitio:
 ${examples}
 
 Reglas estrictas:
-- Toda afirmación en tu respuesta debe estar respaldada por los "HECHOS" que te paso — no inventes fechas, nombres, cifras ni detalles que no estén ahí.
+- Toda cifra, fecha o nombre propio en tu respuesta debe aparecer literalmente en "HECHOS". Si te paso un "CONTEXTO ADICIONAL" de Wikipedia, usalo únicamente para elegir mejores palabras o entender mejor el tema — nunca para sumar una fecha, cifra o dato que no esté ya en HECHOS, aunque sea verdadero.
 - Si los hechos no alcanzan para una curiosidad interesante, igual redactá lo mejor posible con lo que hay — no inventes para rellenar.
+- Al escribir números de miles, usá el formato con espacio como separador (ej. "4 000") solo si preferís esa forma; ambas se validan igual.
 - Respondé ÚNICAMENTE un objeto JSON con las claves: label, title, context, tags (array de strings). Sin texto adicional.`;
 }
 
@@ -57,42 +56,19 @@ function validateDraft(raw: unknown): DraftPiece | null {
 export async function rewriteCandidate(
 	candidate: RawCandidate,
 ): Promise<DraftPiece | null> {
-	const apiKey = process.env.GROQ_API_KEY;
-	if (!apiKey) throw new Error("GROQ_API_KEY is not configured");
-	const model = process.env.GROQ_MODEL ?? DEFAULT_MODEL;
-
 	const userPrompt = `HECHOS:\n${candidate.facts}${
 		candidate.context
 			? `\n\nCONTEXTO ADICIONAL (Wikipedia, solo para color, no inventes nada que no esté ya en HECHOS):\n${candidate.context}`
 			: ""
 	}\n\nCategoría: ${candidate.category}. Tipo: ${candidate.type}.`;
 
-	const res = await fetch(GROQ_ENDPOINT, {
-		method: "POST",
-		headers: {
-			Authorization: `Bearer ${apiKey}`,
-			"Content-Type": "application/json",
-		},
-		body: JSON.stringify({
-			model,
-			response_format: { type: "json_object" },
-			temperature: 0.7,
-			messages: [
-				{ role: "system", content: buildSystemPrompt() },
-				{ role: "user", content: userPrompt },
-			],
-		}),
-		signal: AbortSignal.timeout(30_000),
-	});
-
-	if (!res.ok) {
-		throw new Error(`Groq rewrite failed: ${res.status} ${await res.text()}`);
-	}
-
-	const data = (await res.json()) as {
-		choices?: { message?: { content?: string } }[];
-	};
-	const content = data.choices?.[0]?.message?.content;
+	const content = await callGroq(
+		[
+			{ role: "system", content: buildSystemPrompt() },
+			{ role: "user", content: userPrompt },
+		],
+		{ temperature: 0.7 },
+	);
 	if (!content) return null;
 
 	try {
