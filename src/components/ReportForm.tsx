@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 
 import { Wordmark } from "@/components/Logo";
 import { type ReportReason, reportReasons } from "@/lib/report-reasons";
+import { useFocusTrap } from "@/lib/use-focus-trap";
 import { createReport } from "@/server/reports";
 
 export function ReportForm({
@@ -18,6 +19,7 @@ export function ReportForm({
 		"idle",
 	);
 	const firstRadioRef = useRef<HTMLInputElement>(null);
+	const dialogRef = useFocusTrap<HTMLDivElement>();
 
 	useEffect(() => {
 		firstRadioRef.current?.focus();
@@ -52,6 +54,7 @@ export function ReportForm({
 			/>
 
 			<div
+				ref={dialogRef}
 				role="dialog"
 				aria-modal="true"
 				aria-label="Reportar pieza"

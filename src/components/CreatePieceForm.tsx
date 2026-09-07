@@ -8,6 +8,7 @@ import {
 	type PieceType,
 	typeLabels,
 } from "@/data/pieces";
+import { useFocusTrap } from "@/lib/use-focus-trap";
 
 export type NewPiece = {
 	category: Category;
@@ -42,6 +43,7 @@ export function CreatePieceForm({
 	const [type, setType] = useState<PieceType>("fact");
 	const [error, setError] = useState<string | null>(null);
 	const titleRef = useRef<HTMLInputElement>(null);
+	const dialogRef = useFocusTrap<HTMLDivElement>();
 
 	useEffect(() => {
 		titleRef.current?.focus();
@@ -77,6 +79,7 @@ export function CreatePieceForm({
 			/>
 
 			<div
+				ref={dialogRef}
 				role="dialog"
 				aria-modal="true"
 				aria-label="Sugerir curiosidad"
