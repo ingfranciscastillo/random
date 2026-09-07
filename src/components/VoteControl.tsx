@@ -2,7 +2,7 @@ import { DislikeIcon } from "@solar-icons/react/bold/dislike";
 import { LikeIcon } from "@solar-icons/react/bold/like";
 import { DislikeIcon as DislikeIconOutline } from "@solar-icons/react/outline/dislike";
 import { LikeIcon as LikeIconOutline } from "@solar-icons/react/outline/like";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import { castVote, getVoteState, type VoteValue } from "@/server/votes";
 
@@ -19,6 +19,21 @@ export function VoteControl({ pieceId }: { pieceId: string }) {
 	const [justVoted, setJustVoted] = useState(false);
 	const [exitPhase, setExitPhase] = useState<ExitPhase>(null);
 	const exitTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+	const containerRef = useRef<HTMLDivElement>(null);
+	const pendingFocusValue = useRef<VoteValue | null>(null);
+
+	// Voting swaps the winning/losing buttons for a different set of DOM
+	// nodes, so the clicked button is unmounted mid-interaction and focus
+	// would otherwise fall back to <body>. Re-find the button that now
+	// represents the same vote value and refocus it.
+	useLayoutEffect(() => {
+		if (pendingFocusValue.current === null) return;
+		const target = containerRef.current?.querySelector<HTMLButtonElement>(
+			`[data-vote-value="${pendingFocusValue.current}"]`,
+		);
+		target?.focus();
+		pendingFocusValue.current = null;
+	});
 
 	useEffect(() => {
 		let cancelled = false;
@@ -38,6 +53,7 @@ export function VoteControl({ pieceId }: { pieceId: string }) {
 	const vote = async (value: VoteValue) => {
 		if (pending) return;
 		setPending(true);
+		pendingFocusValue.current = value;
 
 		const prevVote = myVote;
 		const next = prevVote === value ? 0 : value;
@@ -76,9 +92,10 @@ export function VoteControl({ pieceId }: { pieceId: string }) {
 		const LosingIcon = losingValue === 1 ? LikeIconOutline : DislikeIconOutline;
 
 		return (
-			<div className="-ml-2 flex items-center gap-2.5">
+			<div ref={containerRef} className="-ml-2 flex items-center gap-2.5">
 				<button
 					type="button"
+					data-vote-value={myVote}
 					aria-label={
 						myVote === 1 ? "Quitar voto a favor" : "Quitar voto en contra"
 					}
@@ -119,9 +136,10 @@ export function VoteControl({ pieceId }: { pieceId: string }) {
 	}
 
 	return (
-		<div className="-ml-2 flex items-center gap-1">
+		<div ref={containerRef} className="-ml-2 flex items-center gap-1">
 			<button
 				type="button"
+				data-vote-value={1}
 				aria-label="Votar a favor"
 				aria-pressed={false}
 				disabled={pending}
@@ -132,6 +150,7 @@ export function VoteControl({ pieceId }: { pieceId: string }) {
 			</button>
 			<button
 				type="button"
+				data-vote-value={-1}
 				aria-label="Votar en contra"
 				aria-pressed={false}
 				disabled={pending}
