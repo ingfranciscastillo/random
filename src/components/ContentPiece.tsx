@@ -34,6 +34,7 @@ export function ContentPiece({ piece, phase }: { piece: Piece; phase: Phase }) {
 					</p>
 					<span className="flex items-center gap-2">
 						<span
+							aria-hidden="true"
 							className="accent-shift block h-1.25 w-1.25 rounded-full"
 							style={{ backgroundColor: "var(--accent)" }}
 						/>
