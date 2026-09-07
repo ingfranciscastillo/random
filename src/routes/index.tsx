@@ -59,6 +59,7 @@ function RandomPage() {
 		"entering",
 	);
 	const [formOpen, setFormOpen] = useState(false);
+	const [saveError, setSaveError] = useState(false);
 	const timers = useRef<number[]>([]);
 
 	// Randomize order after hydration so SSR and client markup agree.
@@ -80,7 +81,8 @@ function RandomPage() {
 				return next;
 			});
 			setFormOpen(false);
-			createPiece({ data: input }).catch(() => {});
+			setSaveError(false);
+			createPiece({ data: input }).catch(() => setSaveError(true));
 		},
 		[index],
 	);
@@ -145,6 +147,12 @@ function RandomPage() {
 							Sugerir curiosidad
 						</button>
 					</div>
+
+					{saveError ? (
+						<p role="status" className="mt-3 text-[11px] text-ink-soft">
+							Se muestra en esta sesión, pero no se pudo guardar en el servidor.
+						</p>
+					) : null}
 				</div>
 			</div>
 
