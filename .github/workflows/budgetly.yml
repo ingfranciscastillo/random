@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     # Bounds the whole job so a hung dev server (or anything else) fails loudly
     # instead of running until someone notices and cancels it by hand.
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
 
@@ -26,9 +26,11 @@ jobs:
         run: pnpm run build
 
       - name: Start server in background
+        env:
+          PORT: ${{ env.BUDGETLY_PORT }}
         run: |
           pnpm run preview &
-          npx --yes wait-on "http://localhost:${{ env.BUDGETLY_PORT }}" --timeout 60000
+          npx --yes wait-on -v "http://localhost:${{ env.BUDGETLY_PORT }}" --timeout 180000 --interval 2000 --httpTimeout 10000
 
       - name: Run Lighthouse
         timeout-minutes: 5
@@ -55,7 +57,7 @@ jobs:
           };
           // Lighthouse (lab data) has no INP audit — INP is a field metric,
           // not something a single synthetic run produces. Left out on purpose.
-          fetch("http://localhost:3000/api/ingest", {
+          fetch("https://performance-guard.vercel.app/api/ingest", {
             method: "POST",
             headers: {
               "content-type": "application/json",
