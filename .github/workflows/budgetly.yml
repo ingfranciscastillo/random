@@ -28,6 +28,10 @@ jobs:
       - name: Start server in background
         env:
           PORT: ${{ env.BUDGETLY_PORT }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          NASA_API_KEY: ${{ secrets.NASA_API_KEY }}
         run: |
           pnpm run preview &
           npx --yes wait-on -v "http://localhost:${{ env.BUDGETLY_PORT }}" --timeout 180000 --interval 2000 --httpTimeout 10000
@@ -91,3 +95,7 @@ jobs:
 #    on Budgetly (or type an override when connecting) to regenerate this
 #    file — don't edit the values above by hand, they'll be overwritten on
 #    the next reconnect.
+# 3. Forwards these repo secrets to the started server: DATABASE_URL, ADMIN_PASSWORD, GROQ_API_KEY, NASA_API_KEY.
+#    Add/remove which ones by editing "Environment variables" when
+#    reconnecting this repo on Budgetly — the values themselves stay in
+#    this repo's own secrets, Budgetly only stores the names.
