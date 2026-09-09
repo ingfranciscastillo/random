@@ -11,52 +11,28 @@ env:
 jobs:
   lighthouse:
     runs-on: ubuntu-latest
+    # Bounds the whole job so a hung dev server (or anything else) fails loudly
+    # instead of running until someone notices and cancels it by hand.
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/setup@v2
         with:
-          version: 9
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Detect package manager
-        id: pm
-        run: |
-          if [ -f pnpm-lock.yaml ]; then echo "manager=pnpm" >> "$GITHUB_OUTPUT"
-          elif [ -f yarn.lock ]; then echo "manager=yarn" >> "$GITHUB_OUTPUT"
-          else echo "manager=npm" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Install dependencies
-        run: |
-          case "${{ steps.pm.outputs.manager }}" in
-            pnpm) pnpm install --frozen-lockfile ;;
-            yarn) yarn install --frozen-lockfile ;;
-            npm) npm ci ;;
-          esac
+          cache: true
+          require-lockfile: true
 
       - name: Build
-        run: |
-          case "${{ steps.pm.outputs.manager }}" in
-            pnpm) pnpm run build ;;
-            yarn) yarn build ;;
-            npm) npm run build ;;
-          esac
+        run: pnpm run build
 
       - name: Start server in background
         run: |
-          case "${{ steps.pm.outputs.manager }}" in
-            pnpm) pnpm run preview & ;;
-            yarn) yarn preview & ;;
-            npm) npm run preview & ;;
-          esac
-          npx wait-on http://localhost:${{ env.BUDGETLY_PORT }}
+          pnpm run preview &
+          npx --yes wait-on "http://localhost:${{ env.BUDGETLY_PORT }}" --timeout 60000
 
       - name: Run Lighthouse
-        run: npx lighthouse http://localhost:${{ env.BUDGETLY_PORT }} --output=json --output-path=./lighthouse.json --chrome-flags="--headless --no-sandbox"
+        timeout-minutes: 5
+        run: npx --yes lighthouse "http://localhost:${{ env.BUDGETLY_PORT }}" --output=json --output-path=./lighthouse.json --chrome-flags="--headless --no-sandbox" --max-wait-for-load=45000
 
       - name: Report to Budgetly
         env:
@@ -107,9 +83,8 @@ jobs:
 # Setup checklist:
 # 1. Add a repo secret named BUDGETLY_TOKEN (Settings > Secrets and
 #    variables > Actions) with the token from Budgetly's Settings page.
-# 2. Package manager (pnpm/yarn/npm) is auto-detected from the lockfile.
-#    The serve script ("preview") and port (3000) were
-#    detected from this repo's package.json at connect time. Wrong? Disconnect
-#    and reconnect the repo on Budgetly (or type an override when connecting)
-#    to regenerate this file — don't edit the values above by hand, they'll
-#    be overwritten on the next reconnect.
+# 2. Package manager (pnpm), serve script ("preview"),
+#    and port (3000) were detected from this repo at connect time.
+#    Wrong? Disconnect and reconnect the repo on Budgetly (or type an
+#    override when connecting) to regenerate this file — don't edit the
+#    values above by hand, they'll be overwritten on the next reconnect.
