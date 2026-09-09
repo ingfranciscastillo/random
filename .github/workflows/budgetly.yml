@@ -19,6 +19,7 @@ jobs:
 
       - uses: pnpm/setup@v2
         with:
+          version: latest
           cache: true
 
       - name: Build
@@ -82,8 +83,9 @@ jobs:
 # Setup checklist:
 # 1. Add a repo secret named BUDGETLY_TOKEN (Settings > Secrets and
 #    variables > Actions) with the token from Budgetly's Settings page.
-# 2. Package manager (pnpm), serve script ("preview"),
-#    and port (3000) were detected from this repo at connect time.
-#    Wrong? Disconnect and reconnect the repo on Budgetly (or type an
-#    override when connecting) to regenerate this file — don't edit the
-#    values above by hand, they'll be overwritten on the next reconnect.
+# 2. Package manager (pnpm latest),
+#    serve script ("preview"), and port (3000) were detected
+#    from this repo at connect time. Wrong? Disconnect and reconnect the repo
+#    on Budgetly (or type an override when connecting) to regenerate this
+#    file — don't edit the values above by hand, they'll be overwritten on
+#    the next reconnect.
