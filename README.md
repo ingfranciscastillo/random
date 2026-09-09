@@ -19,3 +19,7 @@ visitantes que pasan por una cola de revisión editorial antes de publicarse.
 - [Nitro](https://nitro.build/) como adaptador de servidor
 - [Groq](https://groq.com/) para reescritura y verificación en el pipeline de curaduría
 - [Biome](https://biomejs.dev/) para lint y formato
+
+## CI
+
+Cada pull request corre el workflow de [Budgetly](https://performance-guard.vercel.app/) (`.github/workflows/budgetly.yml`), que construye el sitio, levanta el preview y audita Lighthouse contra los presupuestos de performance definidos.
