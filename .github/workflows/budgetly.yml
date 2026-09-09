@@ -52,7 +52,7 @@ jobs:
           };
           // Lighthouse (lab data) has no INP audit — INP is a field metric,
           // not something a single synthetic run produces. Left out on purpose.
-          fetch("https://YOUR-BUDGETLY-DOMAIN/api/ingest", {
+          fetch("https://performance-guard.vercel.app/api/ingest", {
             method: "POST",
             headers: {
               "content-type": "application/json",
