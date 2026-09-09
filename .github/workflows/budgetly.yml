@@ -20,7 +20,6 @@ jobs:
       - uses: pnpm/setup@v2
         with:
           cache: true
-          require-lockfile: true
 
       - name: Build
         run: pnpm run build
