@@ -1,61 +1,46 @@
 # Managed by Vitalgate. Vitalgate regenerates this file from this repository's Settings — edits made directly here will be overwritten.
 name: Vitalgate Performance Budgets
 
+# Audits the preview deployment your host reports to GitHub for each pull
+# request, instead of building the app here.
 on:
-  pull_request:
-    branches: ["master"]
-
-env:
-  VITALGATE_PORT: 3000
+  deployment_status:
 
 jobs:
   lighthouse:
+    # Successful, non-production deployments only.
+    if: >-
+      github.event.deployment_status.state == 'success' &&
+      github.event.deployment.production_environment != true &&
+      github.event.deployment.environment != 'Production' &&
+      github.event.deployment.environment != 'production'
     runs-on: ubuntu-latest
-    # Only what the job needs: read the code, comment results on the pull
-    # request as a fallback, and ask GitHub for a signed OIDC token that
-    # proves to Vitalgate which repository and pull request this is.
+    # Comment results on the pull request as a fallback, and ask GitHub for
+    # a signed OIDC token that proves to Vitalgate which repository and
+    # commit this is. No checkout: nothing is built here.
     permissions:
-      contents: read
       pull-requests: write
       id-token: write
-    # Bounds the whole job so a hung dev server (or anything else) fails loudly
-    # instead of running until someone notices and cancels it by hand.
-    timeout-minutes: 25
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v7
-
-      - uses: pnpm/setup@v2
-        with:
-          version: latest
-          cache: true
-
-      - name: Build
-        run: pnpm run build
-
-      - name: Start server in background
-        env:
-          PORT: ${{ env.VITALGATE_PORT }}
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
-          NASA_API_KEY: ${{ secrets.NASA_API_KEY }}
-        run: |
-          pnpm run preview &
-          npx --yes wait-on -v "http://localhost:${{ env.VITALGATE_PORT }}" --timeout 180000 --interval 2000 --httpTimeout 10000
-
-      - name: Run Lighthouse
+      - name: Run Lighthouse on the preview
         timeout-minutes: 12
+        env:
+          PREVIEW_URL: ${{ github.event.deployment_status.environment_url || github.event.deployment_status.target_url }}
+          # Optional: Vercel's "Protection Bypass for Automation" secret, for
+          # previews behind Vercel Authentication.
+          VERCEL_BYPASS: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
         run: |
+          EXTRA_HEADERS=()
+          if [ -n "$VERCEL_BYPASS" ]; then
+            EXTRA_HEADERS=(--extra-headers "{\"x-vercel-protection-bypass\":\"$VERCEL_BYPASS\"}")
+          fi
           for i in $(seq 1 3); do
-            npx --yes lighthouse "http://localhost:${{ env.VITALGATE_PORT }}" --output=json --output-path=./lighthouse-$i.json --chrome-flags="--headless --no-sandbox" --max-wait-for-load=45000 || echo "Lighthouse run $i failed"
+            npx --yes lighthouse "$PREVIEW_URL" --output=json --output-path=./lighthouse-$i.json --chrome-flags="--headless --no-sandbox" --max-wait-for-load=45000 "${EXTRA_HEADERS[@]}" || echo "Lighthouse run $i failed"
           done
 
       - name: Report to Vitalgate
         env:
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          PR_TITLE: ${{ github.event.pull_request.title }}
-          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
-          PR_BRANCH: ${{ github.event.pull_request.head.ref }}
-          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           node -e '
@@ -125,11 +110,11 @@ jobs:
               return;
             }
             const oidc = await fetch(
-              process.env.ACTIONS_ID_TOKEN_REQUEST_URL + "&audience=" + encodeURIComponent("http://localhost:3000"),
+              process.env.ACTIONS_ID_TOKEN_REQUEST_URL + "&audience=" + encodeURIComponent("https://vitalgate.vercel.app"),
               { headers: { authorization: "Bearer " + process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN } },
             ).then((r) => r.json());
 
-            const res = await fetch("http://localhost:3000/api/ingest", {
+            const res = await fetch("https://vitalgate.vercel.app/api/ingest", {
               method: "POST",
               headers: {
                 "content-type": "application/json",
@@ -163,10 +148,3 @@ jobs:
             }
           })();
           '
-
-# Package manager (pnpm latest), serve script ("preview")
-# and port (3000) were detected from this repo's files. To change them,
-# or the secrets forwarded to the server, use this repository's Settings on
-# Vitalgate and regenerate the workflow — edits made here are overwritten.
-# Forwards these repo secrets to the started server: DATABASE_URL, GROQ_API_KEY, NASA_API_KEY.
-# Vitalgate only stores their names; the values stay in this repo's secrets.
