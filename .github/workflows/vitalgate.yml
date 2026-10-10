@@ -35,9 +35,6 @@ jobs:
       - name: Start server in background
         env:
           PORT: ${{ env.VITALGATE_PORT }}
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
-          NASA_API_KEY: ${{ secrets.NASA_API_KEY }}
         run: |
           pnpm run preview &
           npx --yes wait-on -v "http://localhost:${{ env.VITALGATE_PORT }}" --timeout 180000 --interval 2000 --httpTimeout 10000
@@ -104,11 +101,11 @@ jobs:
               return;
             }
             const oidc = await fetch(
-              process.env.ACTIONS_ID_TOKEN_REQUEST_URL + "&audience=" + encodeURIComponent("http://localhost:3000"),
+              process.env.ACTIONS_ID_TOKEN_REQUEST_URL + "&audience=" + encodeURIComponent("https://vitalgate.vercel.app"),
               { headers: { authorization: "Bearer " + process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN } },
             ).then((r) => r.json());
 
-            const res = await fetch("http://localhost:3000/api/ingest", {
+            const res = await fetch("https://vitalgate.vercel.app/api/ingest", {
               method: "POST",
               headers: {
                 "content-type": "application/json",
@@ -146,5 +143,3 @@ jobs:
 # and port (3000) were detected from this repo's files. To change them,
 # or the secrets forwarded to the server, use this repository's Settings on
 # Vitalgate and regenerate the workflow — edits made here are overwritten.
-# Forwards these repo secrets to the started server: DATABASE_URL, GROQ_API_KEY, NASA_API_KEY.
-# Vitalgate only stores their names; the values stay in this repo's secrets.
